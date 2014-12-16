@@ -78,7 +78,7 @@ wind_related <- grep(paste(wind, collapse = "|"), No_summaries, ignore.case = TR
 # Events related to ice and extreme cold
 ice <- c("snow", "ice", "icy", "cold", "hail", "freez", "blizzard", "frost", "hypothermia", "sleet", 
          "avalanche", "winter", "avalance", "fog", "record low", "wintry", "hyperthermia", 
-         "low temperature", "cool", "glaze")
+         "low temperature", "cool", "glaze", "heavy mix")
 ice_related <- grep(paste(ice, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
 #no_ice <- setdiff(No_summaries, ice_related)
 
@@ -107,10 +107,12 @@ lightning_related <- grep(paste(lightning, collapse = "|"), No_summaries, ignore
 volcanic <- c("volcanic", "vog")
 volcanic_related <- grep(paste(volcanic, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
 
-setdiff(No_summaries,
+other <- setdiff(No_summaries,
         union(wind_related,
               union(ice_related,
                     union(heat_related,
                           union(flood_related,
                                 union(marine_related,
                                       union(lightning_related, volcanic_related)))))))
+
+uncategorised <- storm[storm$EVTYPE %in% other,]
