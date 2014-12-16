@@ -62,3 +62,55 @@ states <- cbind(state.abb,state.name)
 # As decisions made at state level, would be useful to give a breakdown by state
 # Use ggplot2 map coords to illustrate?
 # But see Deisgnator codes in table 2.1.1. of data documentation
+
+# Tyring to grep out related events:
+EV_types <- unique(storm$EVTYPE)
+
+# First, remove the 'Summary' events
+No_summaries <- setdiff(EV_types,grep("summary", setdiff(EV_types,no_wchf), ignore.case = TRUE, value = TRUE))
+
+# Extreme wind events
+wind <- c("wind", "tornado", "torndao", "storm", "hurricane", "cloud", "gustnado", "funnel", "typhoon", 
+          "tropical depression", "tstm", "wnd", "remnants of floyd")
+wind_related <- grep(paste(wind, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+#no_wind <- setdiff(No_summaries, wind_related)
+
+# Events related to ice and extreme cold
+ice <- c("snow", "ice", "icy", "cold", "hail", "freez", "blizzard", "frost", "hypothermia", "sleet", 
+         "avalanche", "winter", "avalance", "fog", "record low", "wintry", "hyperthermia", 
+         "low temperature", "cool", "glaze")
+ice_related <- grep(paste(ice, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+#no_ice <- setdiff(No_summaries, ice_related)
+
+# Events related to extreme heat
+heat <- c("heat", "warm", "dry", "driest", "drought", "hot", "record high", "dust", "fire", "smoke",
+          "high temperature")
+heat_related <- grep(paste(heat, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+#no_heat <- setdiff(No_summaries, heat_related)
+
+# Rain and flood related events
+flood <- c("rain", "flood", "floood", "wet", "precipitation", "precip", "slide", "shower", "burst", 
+           "dam", "fld", "slump", "stream", "rising water", "drowning", "urban")
+flood_related <- grep(paste(flood, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+#no_flood <- setdiff(No_summaries, flood_related)
+
+# Marine events
+marine <- c("sea", "marine", "current", "tide", "surf", "spout", "swell", "seiche", "tsunami", "wave", 
+            "surge", "high water")
+marine_related <- grep(paste(marine, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+
+# Lightning
+lightning <- c("lightning", "lighting", "ligntning", "red flag criteria")
+lightning_related <- grep(paste(lightning, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+
+# Volcanic
+volcanic <- c("volcanic", "vog")
+volcanic_related <- grep(paste(volcanic, collapse = "|"), No_summaries, ignore.case = TRUE, value = TRUE)
+
+setdiff(No_summaries,
+        union(wind_related,
+              union(ice_related,
+                    union(heat_related,
+                          union(flood_related,
+                                union(marine_related,
+                                      union(lightning_related, volcanic_related)))))))
