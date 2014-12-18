@@ -116,3 +116,26 @@ other <- setdiff(No_summaries,
                                       union(lightning_related, volcanic_related)))))))
 
 uncategorised <- storm[storm$EVTYPE %in% other,]
+
+storm_cost_significant <- filter(storm, (PROPDMG != 0 & CROPDMG != 0))
+
+expon <- function(x) {
+    if (x == "B" | x == "b" ) {
+        x <- 10^9
+    } else {
+        if (x == "M" | x == "m") {
+            x <- 10^6
+        } else {
+            if (x == "K" | x == "k") {
+                x <- 10^3
+            } else {
+                if (x == "") {
+                    x <- 1
+                } else {
+                    x <- 10^as.numeric(x)
+                }
+            }
+        }
+    }
+#    print(x)
+}
