@@ -117,30 +117,19 @@ other <- setdiff(No_summaries,
 
 uncategorised <- storm[storm$EVTYPE %in% other,]
 
-storm_cost_significant <- filter(storm, (PROPDMG != 0 & CROPDMG != 0))
+# Let's grab the years as a vector
+years <- gsub("\\d+\\/\\d+\\/(\\d+)\\s0:00:00", "\\1", storm$BGN_DATE)
 
-expon <- function(x) {
-    if (x == "B" | x == "b" ) {
-        x <- 10^9
-    } else {
-        if (x == "M" | x == "m") {
-            x <- 10^6
-        } else {
-            if (x == "K" | x == "k") {
-                x <- 10^3
-            } else {
-                if (x == "") {
-                    x <- 1
-                } else {
-                    x <- 10^as.numeric(x)
-                }
-            }
-        }
-    }
-    print(x)
-}
+storm$BGN_DATE <- years
 
-prop_exp <- levels(as.factor(storm_cost_significant$PROPDMGEXP))
-# Need to change case of "k"
-prop_exp <- ordered(prop_exp, levels = c("B","M","K","5","3","0",""))
-# Then simply order using 'group_by' statement in summarisation
+storm_by_date <- storm %>%
+    filter(FATALITIES != 0 & INJURIES != 0) %>%
+    group_by(BGN_DATE, EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%
+    arrange(BGN_DATE, EVTYPE, FATALITIES, INJURIES)
+
+storm_by_state <- storm %>%
+    filter(FATALITIES != 0 & INJURIES != 0) %>%
+    group_by(STATE, EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%
+    arrange(STATE, EVTYPE, FATALITIES, INJURIES)
