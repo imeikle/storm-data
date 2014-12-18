@@ -137,5 +137,5 @@ expon <- function(x) {
             }
         }
     }
-#    print(x)
+    print(x)
 }
