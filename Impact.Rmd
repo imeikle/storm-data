@@ -1,0 +1,105 @@
+---
+title: "Human and Environmental Impact of Extreme Weather Events"
+output: html_document
+---
+
+Synopsis
+========
+
+(To follow completion of results)
+
+Data Processing
+===============
+Load libraries required.
+```{r libraries, message=FALSE}
+library(dplyr)
+```
+
+
+Load the raw data.
+```{r loadData, cache=TRUE}
+storm <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE)
+```
+
+Populate a data frame with the human impact for the whole of the United States, 
+ordered by number of deaths and injuries per type of event, initially removing 
+those events that do not contribute to totals
+```{r humanImpact, cache=TRUE}
+storm_hi_agg <- storm %>%
+    filter(FATALITIES != 0 & INJURIES != 0) %>%
+    group_by(EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES,na.rm = T), 
+              INJURIES = sum(INJURIES, na.rm = T)) %>%
+    arrange(desc(FATALITIES), desc(INJURIES))
+```
+
+Similarly, produce a summary of the economic impact in terms of damage to 
+property and to crops. This data is stored as pairs of {numerator, exponent} 
+variables, with the exponents represented as numbers or single character 
+suffixes of mixed case. These are converted to integer multipliers prior to 
+summation. Once again, non-contributory events are discarded prior to further 
+processing.
+```{r economicImpact, cache=TRUE, warning=FALSE}
+
+storm_cost_significant <- filter(storm, (PROPDMG != 0 & CROPDMG != 0))
+
+# Replace duplicates caused by case variance
+storm_cost_significant$PROPDMGEXP <- sapply(storm_cost_significant$PROPDMGEXP,toupper)
+storm_cost_significant$CROPDMGEXP <- sapply(storm_cost_significant$CROPDMGEXP,toupper)
+
+# Function to translate exponents to integers
+expand <- function(x) {
+        if (is.na(as.integer(x))) {
+                return (1)
+        } else {
+                if (x == "K") {
+                        return (1000)
+                } else {
+                        if (x == "M") {
+                                return (10^6)
+                        } else {
+                                if (x == "B") {
+                                        return (10^9)
+                                } else {
+                                        return(10^(as.integer(x)))
+                                }
+                        }
+                }
+        }
+}
+
+# Vectors are created containing the re-constitued costs
+tpd <- with(storm_cost_significant, PROPDMG * mapply(expand, PROPDMGEXP))
+tcd <- with(storm_cost_significant, CROPDMG * mapply(expand, CROPDMGEXP))
+
+# These are then bound to a reduced set of variables
+storm_ei <- cbind(storm_cost_significant[c(1,2,7,8,25:28)], 
+                        PropertyCost = tpd, CropCost = tcd)
+
+# From this, aggregate costs are calulated
+property_cost <- storm_ei %>%
+        group_by(EVTYPE) %>%
+        summarise(Prop_Cost = sum(PropertyCost)) %>%
+        arrange(desc(Prop_Cost))
+
+crop_cost <- storm_ei %>%
+        group_by(EVTYPE) %>%
+        summarise(Crop_Cost = sum(CropCost)) %>%
+        arrange(desc(Crop_Cost))
+
+# Finally the full cost of damage to property and crops is calculated
+storm_ei_agg <- merge(property_cost, crop_cost)
+
+storm_ei_agg <- storm_ei_agg %>%
+        mutate(Total_Cost = Prop_Cost + Crop_Cost) %>%
+        arrange(desc(Total_Cost))
+```
+
+To do:
+
+ - Aggregate similar and misnamed events
+ - Breakdown top impactful events by geographic location, probably state
+ - Map impact per state
+ 
+Results
+=======

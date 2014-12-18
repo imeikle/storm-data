@@ -143,3 +143,4 @@ expon <- function(x) {
 prop_exp <- levels(as.factor(storm_cost_significant$PROPDMGEXP))
 # Need to change case of "k"
 prop_exp <- ordered(prop_exp, levels = c("B","M","K","5","3","0",""))
+# Then simply order using 'group_by' statement in summarisation
