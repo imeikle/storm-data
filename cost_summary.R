@@ -128,3 +128,45 @@ crops <- storm_cost_significant %>%
 # Reverse to give a descending value of exponent
 crops[rev(seq(1:nrow(crops))),]
 
+# This only captures events where there are both F & I
+storm_dead <- filter(storm, FATALITIES != 0 & INJURIES != 0)
+states_dead  <- storm_dead %>%
+        select(STATE, EVTYPE, FATALITIES, INJURIES) %>%
+        group_by(STATE) %>%
+        filter(FATALITIES == max(FATALITIES)) %>%
+        arrange(STATE)
+
+storm_dead1 <- filter(storm, FATALITIES != 0 & INJURIES != 0) %>%
+        mutate(CASUALTIES = FATALITIES + INJURIES) %>%
+        select(STATE, EVTYPE, CASUALTIES)
+states_cas  <- storm_dead1 %>%
+        select(STATE, EVTYPE, CASUALTIES) %>%
+        group_by(STATE) %>%
+        filter(CASUALTIES == max(CASUALTIES)) %>%
+        arrange(STATE)
+
+test <- test %>%
+        select(STATE, EVTYPE, FATALITIES, INJURIES) %>%
+        group_by(STATE) %>%
+        filter(FATALITIES == max(FATALITIES)) %>%
+        arrange(STATE)
+
+storm_ei_state <- storm_ei %>%
+        mutate(Total_Cost = PropertyCost + CropCost) %>%
+        select(STATE, EVTYPE, Total_Cost) %>%
+        group_by(STATE) %>%
+        filter(Total_Cost == max(Total_Cost)) %>%
+        arrange(STATE)
+
+
+#ggplot(test, aes(factor(STATE), weight = FATALITIES, fill = factor(EVTYPE))) + 
+#        geom_bar(position="dodge")
+ggplot(test, aes(STATE, FATALITIES, fill = EVTYPE)) + 
+        geom_bar(position="dodge", stat = "identity") + theme(axis.text.x = element_text(angle = 270))
+
+states_gg <- ggplot(test, aes(STATE, FATALITIES, fill = EVTYPE)) +
+        geom_bar(position="dodge", stat = "identity") +
+        theme(axis.text.x = element_text(angle = 270)) +
+        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+states_gg
+

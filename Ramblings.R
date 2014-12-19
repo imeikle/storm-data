@@ -131,5 +131,10 @@ storm_by_date <- storm %>%
 storm_by_state <- storm %>%
     filter(FATALITIES != 0 & INJURIES != 0) %>%
     group_by(STATE, EVTYPE) %>%
-    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%
-    arrange(STATE, EVTYPE, FATALITIES, INJURIES)
+    filter(FATALITIES == max(FATALITIES)) %>%
+    select(STATE,EVTYPE,FATALITIES) %>%
+    top_n(n=1)
+
+
+#    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%
+#    arrange(STATE, EVTYPE, FATALITIES, INJURIES)

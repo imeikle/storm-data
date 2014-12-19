@@ -13,6 +13,7 @@ Data Processing
 Load libraries required.
 ```{r libraries, message=FALSE}
 library(dplyr)
+library(ggplot2)
 ```
 
 
@@ -23,10 +24,10 @@ storm <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE)
 
 Populate a data frame with the human impact for the whole of the United States, 
 ordered by number of deaths and injuries per type of event, initially removing 
-those events that do not contribute to totals
+those events that did not result in fatalities
 ```{r humanImpact, cache=TRUE}
 storm_hi_agg <- storm %>%
-    filter(FATALITIES != 0 & INJURIES != 0) %>%
+    filter(FATALITIES != 0) %>%
     group_by(EVTYPE) %>%
     summarise(FATALITIES = sum(FATALITIES,na.rm = T), 
               INJURIES = sum(INJURIES, na.rm = T)) %>%
@@ -95,11 +96,73 @@ storm_ei_agg <- storm_ei_agg %>%
         arrange(desc(Total_Cost))
 ```
 
+The gross statistic for the whole country is further broken down by state.
+
+```{r humanImpactState}
+storm_hi_state <- filter(storm, FATALITIES != 0)
+
+storm_hi_state <- storm_hi_state %>%
+        select(STATE, EVTYPE, FATALITIES, INJURIES) %>%
+        group_by(STATE) %>%
+        filter(FATALITIES == max(FATALITIES)) %>%
+        arrange(STATE)
+```
+
+
+```{r economicImpactState}
+storm_ei_state <- storm_ei %>%
+        mutate(Total_Cost = PropertyCost + CropCost) %>%
+        select(STATE, EVTYPE, Total_Cost) %>%
+        group_by(STATE) %>%
+        filter(Total_Cost == max(Total_Cost)) %>%
+        arrange(STATE)
+```
+
 To do:
 
  - Aggregate similar and misnamed events
- - Breakdown top impactful events by geographic location, probably state
  - Map impact per state
  
 Results
 =======
+
+
+The human impact per state can be seen in figure X (Caption needed)
+
+```{r humanImpactStateFig}
+hi_states_gg <- ggplot(storm_hi_state, aes(STATE, FATALITIES, fill = EVTYPE)) +
+        geom_bar(position="dodge", stat = "identity") +
+        theme(axis.text.x = element_text(angle = 270)) +
+        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+hi_states_gg
+```
+
+```{r economicImpactStatesFig}
+ei_states_gg <- ggplot(storm_ei_state, aes(STATE, Total_Cost, fill = EVTYPE)) +
+        geom_bar(position="dodge", stat = "identity") +
+        theme(axis.text.x = element_text(angle = 270)) +
+        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+ei_states_gg
+```
+
+It should be noted that the second most devastating event across the country is 
+spread across most states. There is no obvious peak state for 'EXCESSIVE HEAT', 
+though it has killed more than 1900 people in the period 1950 - 2011.
+
+The high numbers of people killed by inidivdual heat-related events in Illinois 
+warrants further investigation.
+
+It could be that deaths are more likely to be 
+associated with a heat wave when one occurs, give
+suggests that 
+deaths that happen during a heat wave are automatically associ
+```{r excessiveHeatState}
+exc_heat <- storm[storm$EVTYPE == "EXCESSIVE HEAT" & storm$FATALITIES != 0, 
+                  c("STATE", "FATALITIES")]
+
+exc_heat_state <- exc_heat %>%
+group_by(STATE) %>%
+summarise(sum(FATALITIES))
+
+```
+
