@@ -3,24 +3,56 @@ title: "Human and Environmental Impact of Extreme Weather Events"
 output: html_document
 ---
 
-Synopsis
-========
+# Synopsis
 
 (To follow completion of results)
 
-Data Processing
-===============
-Load libraries required.
+# Data Processing
+
+## Data loading 
+
+Two packages are required. The dlpyr package is used to process the data, the 
+ggplot2 package to display results, xtable to print tables.
 ```{r libraries, message=FALSE}
 library(dplyr)
 library(ggplot2)
+library(xtable)
 ```
 
 
-Load the raw data.
+The raw data is provided as a csv file, archived using bzip. An initial load of 
+ten rows is made and the data investigated
+
+```{r testLoad}
+storm_test <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE, nrows = 10)
+str(storm_test)
+```
+
+The headers provide suitable column names, but most variables will not be required. 
+The full load omits those variables not required for the rest of the analysis.
+
 ```{r loadData, cache=TRUE}
-storm <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE)
+cols <- c('NULL', NA, rep('NULL', 4), NA, NA, rep('NULL', 14), rep(NA, 6), rep('NULL', 9))
+
+storm <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE,
+                  colClasses = cols)
 ```
+
+## Processing
+
+### Data over time
+
+This data covers a period of over 60 years. It is worth investigating how data 
+gathering around weather events have changed over time. The BGN_DATE variable 
+is used to identify the year in which the event occurred. 
+
+```{r dataOverTime}
+years <- as.Date(gsub("(\\d+\\/\\d+\\/\\d+)\\s0:00:00", "\\1", storm$BGN_DATE), format = "%m/%d/%Y")
+
+storm$BGN_DATE <- years 
+```
+
+### Human and economic impact
 
 Populate a data frame with the human impact for the whole of the United States, 
 ordered by number of deaths and injuries per type of event, initially removing 
@@ -74,8 +106,7 @@ tpd <- with(storm_cost_significant, PROPDMG * mapply(expand, PROPDMGEXP))
 tcd <- with(storm_cost_significant, CROPDMG * mapply(expand, CROPDMGEXP))
 
 # These are then bound to a reduced set of variables
-storm_ei <- cbind(storm_cost_significant[c(1,2,7,8,25:28)], 
-                        PropertyCost = tpd, CropCost = tcd)
+storm_ei <- cbind(storm_cost_significant, PropertyCost = tpd, CropCost = tcd)
 
 # From this, aggregate costs are calulated
 property_cost <- storm_ei %>%
@@ -96,9 +127,12 @@ storm_ei_agg <- storm_ei_agg %>%
         arrange(desc(Total_Cost))
 ```
 
-The gross statistic for the whole country is further broken down by state.
+### Impact by geographic location
 
-```{r humanImpactState}
+The gross statistic for the whole country is broken down by state by looking at 
+the most impactful individual events recorded in the period under study.
+
+```{r humanImpactState, cache=TRUE}
 storm_hi_state <- filter(storm, FATALITIES != 0)
 
 storm_hi_state <- storm_hi_state %>%
@@ -109,7 +143,7 @@ storm_hi_state <- storm_hi_state %>%
 ```
 
 
-```{r economicImpactState}
+```{r economicImpactState, cache=TRUE}
 storm_ei_state <- storm_ei %>%
         mutate(Total_Cost = PropertyCost + CropCost) %>%
         select(STATE, EVTYPE, Total_Cost) %>%
@@ -118,32 +152,60 @@ storm_ei_state <- storm_ei %>%
         arrange(STATE)
 ```
 
-To do:
+# Results
 
- - Aggregate similar and misnamed events
- - Map impact per state
- 
-Results
-=======
+## Recorded events over time
+This histogram shows how the number of recorded events increased over time, with 
+a sharp jump in the mid 1990s. As later events predominate, it has been decided 
+that the effects of inflation on the value of damage sustained will not be 
+included in this study.
 
+```{r histogramDates}
+ggplot(storm, aes(BGN_DATE)) + geom_histogram(fill="white", colour="darkgreen") +
+    labs(title = "Figure 1. Distribution of recorded events over time", 
+         x = "Years", y = "Count")
+```
 
-The human impact per state can be seen in figure X (Caption needed)
+## Gross Impact
+
+```{r humanImpactResults, results='asis'}
+hi_tbl <- xtable(as.data.frame(storm_hi_agg[1:10,]), 
+                 caption = "Table 1. Human impact of weather events")
+print(hi_tbl, type ="HTML", html.table.attributes = "border = '0'")
+```
+
+```{r economicImpactResults, results='asis'}
+ei_tbl <- xtable(as.data.frame(storm_ei_agg[1:10,]), 
+                 caption = "Table 2. Economic impact of weather events")
+print(ei_tbl, type ="HTML", html.table.attributes = "border = '0'")
+```
+
+## Local impact
+
+The human impact per state of individual events can be seen in figure 1.
 
 ```{r humanImpactStateFig}
 hi_states_gg <- ggplot(storm_hi_state, aes(STATE, FATALITIES, fill = EVTYPE)) +
-        geom_bar(position="dodge", stat = "identity") +
-        theme(axis.text.x = element_text(angle = 270)) +
-        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+    geom_bar(position="dodge", stat = "identity") +
+    theme(axis.text.x = element_text(angle = 270)) +
+    guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5)) +
+    labs(title = "Figure 2. Highest fatality event per state")
 hi_states_gg
 ```
 
+Tornados are predominant across a number of states, though the death toll from a 
+single heat wave in Illinois stands out.
+
 ```{r economicImpactStatesFig}
 ei_states_gg <- ggplot(storm_ei_state, aes(STATE, Total_Cost, fill = EVTYPE)) +
-        geom_bar(position="dodge", stat = "identity") +
-        theme(axis.text.x = element_text(angle = 270)) +
-        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+    geom_bar(position="dodge", stat = "identity") +
+    theme(axis.text.x = element_text(angle = 270)) + scale_y_sqrt() + 
+    guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5)) +
+    labs(title = "Figure 3. Most costly event per state")
+# Needs a log scale
 ei_states_gg
 ```
+
 
 It should be noted that the second most devastating event across the country is 
 spread across most states. There is no obvious peak state for 'EXCESSIVE HEAT', 

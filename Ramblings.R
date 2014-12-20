@@ -1,10 +1,14 @@
 # Read in some of the csv file to grab the variable names
-storm <- read.csv("repdata-data-StormData.csv", stringsAsFactors = FALSE, nrows = 10)
+storm_test <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE, nrows = 10)
 
 # Convert selected columns to factors: STATE, EVTYPE
 # Look at work done on RT report
 names(storm)
 
+cols <- c('NULL', NA, rep('NULL', 4), NA, NA, rep('NULL', 14), rep(NA, 6), rep('NULL', 9))
+
+storm_test <- read.csv("repdata-data-StormData.csv.bz2", stringsAsFactors = FALSE, 
+                       colClasses = cols, nrows = 10)
 # cols <- c("character",
 #           "character",
 #           "numeric",
@@ -122,18 +126,7 @@ years <- gsub("\\d+\\/\\d+\\/(\\d+)\\s0:00:00", "\\1", storm$BGN_DATE)
 
 storm$BGN_DATE <- years
 
-storm_by_date <- storm %>%
-    filter(FATALITIES != 0 & INJURIES != 0) %>%
-    group_by(BGN_DATE, EVTYPE) %>%
-    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%
-    arrange(BGN_DATE, EVTYPE, FATALITIES, INJURIES)
-
-storm_by_state <- storm %>%
-    filter(FATALITIES != 0 & INJURIES != 0) %>%
-    group_by(STATE, EVTYPE) %>%
-    filter(FATALITIES == max(FATALITIES)) %>%
-    select(STATE,EVTYPE,FATALITIES) %>%
-    top_n(n=1)
+storm_by_date <-  group_by(storm,BGN_DATE) 
 
 
 #    summarise(FATALITIES = sum(FATALITIES,na.rm = T), INJURIES = sum(INJURIES, na.rm = T)) %>%

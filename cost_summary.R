@@ -170,3 +170,9 @@ states_gg <- ggplot(test, aes(STATE, FATALITIES, fill = EVTYPE)) +
         guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
 states_gg
 
+ei_states_gg <- ggplot(storm_ei_state, aes(STATE, Total_Cost, fill = EVTYPE)) +
+        geom_bar(position="dodge", stat = "identity") +
+        theme(axis.text.x = element_text(angle = 270)) + scale_y_sqrt() + 
+        guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5))
+ei_states_gg
+```
