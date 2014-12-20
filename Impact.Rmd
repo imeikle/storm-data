@@ -160,7 +160,7 @@ a sharp jump in the mid 1990s. As later events predominate, it has been decided
 that the effects of inflation on the value of damage sustained will not be 
 included in this study.
 
-```{r histogramDates}
+```{r histogramDates, message=FALSE}
 ggplot(storm, aes(BGN_DATE)) + geom_histogram(fill="white", colour="darkgreen") +
     labs(title = "Figure 1. Distribution of recorded events over time", 
          x = "Years", y = "Count")
@@ -182,7 +182,7 @@ print(ei_tbl, type ="HTML", html.table.attributes = "border = '0'")
 
 ## Local impact
 
-The human impact per state of individual events can be seen in figure 1.
+The human impact per state of individual events can be seen in figure 2.
 
 ```{r humanImpactStateFig}
 hi_states_gg <- ggplot(storm_hi_state, aes(STATE, FATALITIES, fill = EVTYPE)) +
@@ -196,16 +196,20 @@ hi_states_gg
 Tornados are predominant across a number of states, though the death toll from a 
 single heat wave in Illinois stands out.
 
+Local economic impact of indivudal events can be seen in figure 3. The vertical 
+scale has been adjusted for visibility.
 ```{r economicImpactStatesFig}
 ei_states_gg <- ggplot(storm_ei_state, aes(STATE, Total_Cost, fill = EVTYPE)) +
     geom_bar(position="dodge", stat = "identity") +
     theme(axis.text.x = element_text(angle = 270)) + scale_y_sqrt() + 
     guides(fill = guide_legend(keyheight = 0.8, keywidth = 0.5)) +
-    labs(title = "Figure 3. Most costly event per state")
+    labs(title = "Figure 3. Most costly event per state", 
+         y = "Total cost (non-linear scale)")
 # Needs a log scale
 ei_states_gg
 ```
 
+[Discussion required]
 
 It should be noted that the second most devastating event across the country is 
 spread across most states. There is no obvious peak state for 'EXCESSIVE HEAT', 
